@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container>
+  <Beta>False</Beta>
+  <Category>MediaServer:Video MediaServer:Music MediaServer:Photos</Category>
+  <Date>2017-01-02</Date>
+  <Changes>
+You can keep a changelog within here, or just simply do
+[a href='www.plex.tv/yourChangeLog' target='_blank']Refer to the master Plex Change Log[/a]
+  </Changes>
+  <Name>Plex Media Server</Name>
+  <!-- Was thinking that an actual unRaid entry should be here so that the community can help with actual installation, etc rather than putting it on your forum.  Obviously would need you guys to create an account and thread -->
+  <Support>http://lime-technology.com/forum/index.php?topic=42148.0</Support>
+  <Description>
+  [b]Official Docker container for Plex Media Server[/b]
+  
+  With our easy-to-install Plex Media Server software and your Plex apps, available on all your favorite phones, tablets, streaming devices, gaming consoles, and smart TVs, you can stream your video, music, and photo collections any time, anywhere, to any device.
+  </Description>
+  <Project>https://plex.tv/</Project>
+<!-- Change to suit -->
+  <Registry>https://hub.docker.com/r/linuxserver/plex/</Registry>
+  <Repository>plexinc/pms-docker</Repository>
+  <BindTime>true</BindTime>
+  <Privileged>false</Privileged>
+  <Environment>
+    <Variable>
+      <Name>PUID</Name>
+      <Value>99</Value>
+    </Variable>
+    <Variable>
+      <Name>PGID</Name>
+      <Value>100</Value>
+    </Variable>
+    <Variable>
+      <Name>VERSION</Name>
+      <Value>latest</Value>
+    </Variable>
+  </Environment>
+  <Networking>
+    <Mode>host</Mode>
+    <Publish/>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir></HostDir>
+      <ContainerDir>/config</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir></HostDir>
+      <ContainerDir>/Media</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+<WebUI>http://[IP]:[PORT:32400]/web</WebUI>
+<!-- Change To Suit -->
+<Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/plex-icon.png</Icon>
+<ExtraParams></ExtraParams>
+<DonateText>Upgrade To PlexPass</DonateText>
+<DonateTextViews>Upgrade To PlexPass</DonateTextViews>
+<!-- Change Links Accordingly -->
+<DonateLink>https://www.plex.tv</DonateLink>
+<!-- Image is resized to be ~1/2 the size of paypal's Donate Button with CC info -->
+<DonateImg>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/donate.png</DonateImg>
+</Container>
