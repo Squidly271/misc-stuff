@@ -8,7 +8,7 @@ function xml_encode($string) {
 $allTemplates = json_decode(file_get_contents("/tmp/community.applications/tempFiles/templates.json"),true);
 $userTemplates = glob("/boot/config/plugins/dockerMan/templates-user/*.xml");
 
-if (! allTemplates ) {
+if (! $allTemplates ) {
   echo "Before running this script, you MUST go to the Apps Tab First!";
   exit();
 }
