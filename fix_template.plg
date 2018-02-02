@@ -57,7 +57,7 @@ foreach ($userTemplates as $user) {
 	echo "\n";
 }
 
-echo "Completed.  Templates are now updated.  You do not need to ever re-run this script.\n\nIgnore the error below\n";
+echo "Completed.  Templates are now updated.  You do not need to ever re-run this script.  Backups of your existing files were made.  RE-RUNNING THIS SCRIPT AGAIN WILL OVERWRITE THE BACKUPS.\n\nIgnore the error below\n";
 exit(1);
 ?>
 ]]>
