@@ -20,7 +20,7 @@ $userTemplates = glob("/boot/config/plugins/dockerMan/templates-user/*.xml");
 
 if (! $allTemplates ) {
   echo "Before running this script, you MUST go to the Apps Tab First!";
-	exit();
+	exit(1);
 }
 
 foreach ($userTemplates as $user) {
