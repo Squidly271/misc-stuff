@@ -1,6 +1,10 @@
 <?xml version='1.0' standalone='yes'?>
-
 <!DOCTYPE PLUGIN [
+<!ENTITY name      "FixTemplate">
+<!ENTITY author    "Andrew Zawadzki">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Squidly271/misc-stuff/master/fix_template.plg">
+]>
+<PLUGIN>
 
 <FILE Run="/usr/bin/php">
 <INLINE>
@@ -52,7 +56,9 @@ foreach ($userTemplates as $user) {
 	}
 	echo "\n";
 }
-echo 1;
+
+echo "Completed.  Templates are now updated.  Ignore the error below\n";
+exit(1);
 ?>
 ]]>
 </INLINE>
