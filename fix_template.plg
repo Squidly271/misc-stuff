@@ -19,7 +19,7 @@ $allTemplates = json_decode(file_get_contents("/tmp/community.applications/tempF
 $userTemplates = glob("/boot/config/plugins/dockerMan/templates-user/*.xml");
 
 if (! $allTemplates ) {
-  echo "Before running this script, you MUST go to the Apps Tab First!";
+  echo "\n\nBefore running this script, you MUST go to the Apps Tab First!\n\n";
 	exit(1);
 }
 
@@ -57,7 +57,7 @@ foreach ($userTemplates as $user) {
 	echo "\n";
 }
 
-echo "Completed.  Templates are now updated.  Ignore the error below\n";
+echo "Completed.  Templates are now updated.  You do not need to ever re-run this script.\n\nIgnore the error below\n";
 exit(1);
 ?>
 ]]>
