@@ -26,8 +26,14 @@ foreach ($plugins as $plugin) {
 	if ( ! plugin("support",$plugin) ) {
 		$pluginURL = plugin("pluginURL",$plugin);
 		$pluginEntry = searchArray($templates,"PluginURL",$pluginURL);
+		if ( $pluginEntry === false ) {
+			$pluginEntry = searchArray($templates,"PluginURL",str_replace("https://raw.github.com/","https://raw.githubusercontent.com/",$pluginURL));
+		}
 		if ( $pluginEntry !== false ) {
 			$xml = simplexml_load_file($plugin);
+			if ( ! $templates[$pluginEntry]['Support'] ) {
+				continue;
+			}
 			$xml->addAttribute("support",$templates[$pluginEntry]['Support']);
 			$dom = new DOMDocument('1.0');
 			$dom->preserveWhiteSpace = false;
