@@ -4,7 +4,7 @@
 <!ENTITY author    "Andrew Zawadzki">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Squidly271/misc-stuff/master/fix_template.plg">
 ]>
-<PLUGIN>
+<PLUGIN noInstall="true">
 
 <FILE Run="/usr/bin/php">
 <INLINE>
@@ -20,7 +20,7 @@ $userTemplates = glob("/boot/config/plugins/dockerMan/templates-user/*.xml");
 
 if (! $allTemplates ) {
   echo "\n\nBefore running this script, you MUST go to the Apps Tab First!\n\n";
-	exit(1);
+	exit;
 }
 
 foreach ($userTemplates as $user) {
@@ -58,7 +58,7 @@ foreach ($userTemplates as $user) {
 }
 
 echo "Completed.  Templates are now updated.  You do not need to ever re-run this script.  Backups of your existing files were made.  RE-RUNNING THIS SCRIPT AGAIN WILL OVERWRITE THE BACKUPS.\n\nIgnore the error below\n";
-exit(1);
+exit;
 ?>
 ]]>
 </INLINE>
