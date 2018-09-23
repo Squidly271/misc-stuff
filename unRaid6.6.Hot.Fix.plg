@@ -1,0 +1,18 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "unRaid6.6.Hot.Fix">
+<!ENTITY author    "Andrew Zawadzki">
+<!ENTITY version   "2018.09.23">
+]>
+
+<PLUGIN name="&name;" author="&author;" version="&version;" minver="6.6.0" maxver="6.6.0">
+
+<!--
+The 'post-install' script
+-->
+<FILE Run="/bin/bash">
+<INLINE>
+sed -i 's/function dockerRunSecurity($command) {/function dockerRunSecurity($command) {return false;/g' /usr/local/emhttp/plugins/dynamix.docker.manager/include/Helpers.php
+</INLINE>
+</FILE>
+</PLUGIN>
