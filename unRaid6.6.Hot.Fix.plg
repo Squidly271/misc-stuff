@@ -5,7 +5,7 @@
 <!ENTITY version   "2018.09.23">
 ]>
 
-<PLUGIN name="&name;" author="&author;" version="&version;" min="6.6.0" max="6.6.0">
+<PLUGIN name="&name;" author="&author;" version="&version;" min="6.6.0" max="6.6.1">
 
 <!--
 The 'post-install' script
