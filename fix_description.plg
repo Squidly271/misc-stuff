@@ -1,0 +1,54 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "PluginSupport">
+<!ENTITY author    "Andrew Zawadzki">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Squidly271/misc-stuff/master/fix_description.plg">
+]>
+<PLUGIN noInstall="true">
+
+<FILE Run="/usr/bin/php">
+<INLINE>
+<![CDATA[
+<?PHP
+
+function startsWith($haystack, $needle) {
+	if ( !is_string($haystack) || ! is_string($needle) ) return false;
+	return $needle === "" || strripos($haystack, $needle, -strlen($haystack)) !== FALSE;
+}
+
+$xmlFiles = glob("/boot/config/plugins/dockerMan/templates-user/*.xml");
+
+foreach ($xmlFiles as $file) {
+	unset($changeFlag);
+	echo "\nProcessing $file...\n";
+	$xml = simplexml_load_file($file);
+	if ( ! $xml ) {
+		echo "Corrupted!\n";
+		continue;
+	}
+
+	foreach ($xml->Config as $id => $config) {
+		if ( startsWith((string)$config->attributes()->Description,"Container ".(string)$config->attributes()->Type) ) {
+			echo "Removing Config Description ".$config->attributes()->Description."\n";
+			$config->attributes()->Description = "";
+			$changeFlag = true;
+		}
+	}
+	if ( $changeFlag ) {
+		echo "Creating backup file...\n";
+		copy($file,"$file.bak");
+		echo "Writing new file...\n";
+		$dom = new DOMDocument('1.0');
+		$dom->preserveWhiteSpace = false;
+		$dom->formatOutput = true;
+		$dom->loadXML($xml->asXML());
+		file_put_contents($file,$dom->saveXML()); 	
+	}
+}
+echo "\n\nFinished.  There is no need to ever re-run this script."
+?>
+]]>
+</INLINE>
+</FILE>
+
+</PLUGIN>
