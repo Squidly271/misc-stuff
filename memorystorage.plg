@@ -9,8 +9,8 @@
 <FILE Run="/usr/bin/php">
 <INLINE>
 <![CDATA[
-#!/usr/bin/php
 <?
+	echo "<pre>";
   echo "This script may take a few minutes to run, especially if you are manually mounting a remote share outside of /mnt/disks or /mnt/remotes \n \n";
   $defaultExcludes = ["/mnt/user","/mnt/user0","/mnt/disks","/proc","/sys","/var/lib/docker","/boot","/mnt"];
   $disks = parse_ini_file("/var/local/emhttp/disks.ini",true);
@@ -28,6 +28,7 @@
   passthru("/usr/bin/du $ex -h d2 /mnt 2>/dev/null");
   echo "\n\nFinished.\n";
   echo "NOTE: If there is any subdirectory from /mnt appearing in this list, then that means that you have (most likely) a docker app which is directly referencing a non-existant disk or cache pool";
+	echo "</pre>";
 ?>
 ]]>
 </INLINE>
