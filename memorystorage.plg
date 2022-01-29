@@ -1,0 +1,36 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "MemoryStorage">
+<!ENTITY author    "Andrew Zawadzki">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Squidly271/misc-stuff/master/memorystorage.plg">
+]>
+<PLUGIN noInstall="true">
+
+<FILE Run="/usr/bin/php">
+<INLINE>
+<![CDATA[
+#!/usr/bin/php
+<?
+  echo "This script may take a few minutes to run, especially if you are manually mounting a remote share outside of /mnt/disks or /mnt/remotes \n \n";
+  $defaultExcludes = ["/mnt/user","/mnt/user0","/mnt/disks","/proc","/sys","/var/lib/docker","/boot","/mnt"];
+  $disks = parse_ini_file("/var/local/emhttp/disks.ini",true);
+
+  foreach ($defaultExcludes as $excl) {
+    $exclude .= "--exclude=$excl ";
+  }
+  $cmd = "/usr/bin/du $exclude -h -d2 / 2>/dev/null | grep -v 0$'\t'";
+  echo "$cmd\n";
+  passthru($cmd);
+  $ex = "--exclude=/mnt/user* --exclude=/mnt/disks --exclude=/mnt/remotes ";
+  foreach ($disks as $disk) {
+    $ex .="--exclude /mnt/{$disk['name']} ";
+  }
+  passthru("/usr/bin/du $ex -h d2 /mnt 2>/dev/null");
+  echo "\n\nFinished.\n";
+  echo "NOTE: If there is any subdirectory from /mnt appearing in this list, then that means that you have (most likely) a docker app which is directly referencing a non-existant disk or cache pool";
+?>
+]]>
+</INLINE>
+</FILE>
+
+</PLUGIN>
