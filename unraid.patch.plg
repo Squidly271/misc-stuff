@@ -1,0 +1,76 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "unraid.patch">
+<!ENTITY author "Lime Technology">
+<!ENTITY version "2025.01.30">
+<!ENTITY md5 "dd343924f46d43f2d0930a5854db0049">
+<!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
+<!ENTITY github "unraid/unraid.patch">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/main/plugins/&name;.plg">
+]>
+<PLUGIN name="&name;" author="&author;" version="&version;" pluginURL="&pluginURL;" icon="asterisk" launch="Tools/unraidPatch" support="https://forums.unraid.net/topic/185560-unraid-patch-plugin/">
+
+<CHANGES>
+###2025.01.26
+- Fixed: Background update checks could return a false positive notification
+
+###2024.12.18
+- Initial Release
+
+</CHANGES>
+
+<FILE Run="/bin/bash">
+<INLINE>
+rm -f /tmp/plugins/pluginPending/aaa.plg
+# Remove old 'source' files
+rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2&gt;/dev/null | grep -v '&version;')
+</INLINE>
+</FILE>
+
+<!--
+The 'source' file.
+-->
+<FILE Name="/boot/config/plugins/&name;/&name;-&version;-x86_64-1.txz" Run="upgradepkg --install-new">
+<URL>https://raw.github.com/&github;/main/archive/&name;-&version;-x86_64-1.txz</URL>
+<MD5>&md5;</MD5>
+</FILE>
+
+<!--
+The 'post-install' script
+-->
+<FILE Run="/bin/bash">
+<INLINE>
+cp /usr/local/emhttp/plugins/unraid.patch/extra/AAA-UnraidPatch-BootLoader-DO_NOT_DELETE.plg /boot/config/plugins/
+/usr/local/emhttp/plugins/unraid.patch/scripts/patch.php install boot
+
+ln -s /usr/local/emhttp/plugins/unraid.patch/scripts/backgroundCheck.php /etc/cron.weekly/backgroundCheck.php 
+
+if [ ! -f /boot/config/plugins/unraid.patch/accepted ]; then
+  /usr/local/emhttp/plugins/unraid.patch/scripts/backgroundCheck.php
+fi
+
+echo ""
+echo "----------------------------------------------------"
+echo " &name; has been installed."
+echo " Copyright 2024-2025, Lime Technology, Inc"
+echo " Version: &version;"
+echo "----------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<!--
+The 'remove' script.
+-->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+echo NOTE: REMOVING THIS PLUGIN WILL ALSO NOT RE-INSTALL ANY PRIORITY SECURITY UPDATES DURING BOOT
+removepkg &name;-&version;-x86_64-1
+rm -rf &plugdir;
+rm -rf /usr/local/emhttp/plugins/unraid.patch/
+rm -rf /boot/config/plugins/unraid.patch/
+rm -rf /boot/config/plugins/AAA-UnraidPatch-BootLoader-DO_NOT_DELETE.plg
+rm -rf /etc/cron.weekly/backgroundCheck.php
+</INLINE>
+</FILE> 
+</PLUGIN>
