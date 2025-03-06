@@ -1,0 +1,295 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "Patcher">
+<!ENTITY author    "Lime Technology">
+<!ENTITY patchURL  "https://github.com/Squidly271/misc-stuff/raw/refs/heads/master/patches_test.tgz">
+<!ENTITY SHA256    "b9039960004d68c4d5f9c0558dd50225b7c718a9ed1654c6be594aa5ee63a576">
+]>
+<PLUGIN noInstall="true" pluginURL="anything" support="anything">
+
+<!--
+
+Every section in the plg has to always "succeed" any error or exit code will force the .plg to move to plugins-error since it is always
+executed as a new install
+
+This means that certain aspects of the plugin system have to be avoided SHA checking etc
+
+-->
+
+<!-- Delete old patch files -->
+<FILE Run="/bin/bash">
+<INLINE>
+# Check already existing patch txz for corruption
+SHA=$(shasum -a 256 /boot/config/plugins/&name;/patches.txz 2&gt;/dev/null|grep -Po '^\S+')
+
+if [[ $SHA != &SHA256; ]]; then
+  echo pre-existing patches.txz does not match SHA.  Deleting
+
+  rm -f /boot/config/plugins/&name;/patches.txz
+fi
+
+exit 0
+</INLINE>
+</FILE>
+
+
+<!-- Download patch txz -->
+<!--
+System cannot automatically check for the SHA because if it fails the plugin will get moved to plugins-error since it's a new install
+-->
+<FILE Run="/bin/bash">
+<INLINE>
+if [ ! -f /boot/config/plugins/&name;/patches.txz ]; then
+  echo "Downloading patches file"
+  mkdir -p /boot/config/plugins/&name;
+  wget -O /boot/config/plugins/&name;/patches.txz &patchURL;
+fi
+
+exit 0
+</INLINE>
+</FILE>
+
+<!-- Check download SHA -->
+<FILE Run="/bin/bash">
+<INLINE>
+SHA=$(shasum -a 256 /boot/config/plugins/&name;/patches.txz 2&gt;/dev/null|grep -Po '^\S+')
+
+if [[ $SHA != &SHA256; ]]; then
+  echo $SHA
+
+  echo SHA verification error on download
+  rm -f /boot/config/plugins/&name;/patches.txz
+fi
+
+exit 0
+</INLINE>
+</FILE>
+
+<!-- Delete any existing installation scripts if it already exists -->
+<FILE Run="/bin/bash">
+<INLINE>
+rm -rf /tmp/Patcher/install.php
+
+exit 0
+</INLINE>
+</FILE>
+
+<!-- Create installation script -->
+<FILE Name="/tmp/Patcher/install.php">
+<INLINE>
+<![CDATA[
+#!/usr/bin/php
+<?
+/* Copyright 2024-2025, Lime Technology
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+$paths['tmp']              = "/tmp/Patcher";
+$paths['installedUpdates'] = "{$paths['tmp']}/installedUpdates.json";
+$paths['flash']            = "/boot/config/plugins/Patcher/";
+$paths['txz']              = "/boot/config/plugins/Patcher/patches.txz";
+$paths['version']          = "/etc/unraid-version";
+$paths['rebootNotice']     = "{$paths['tmp']}/rebootNotice";
+$paths['firstBoot']        = "{$paths['tmp']}/firstBoot";
+
+function logger($msg) {
+  echo $msg;
+  exec("logger ".str_replace("\n","",escapeshellarg($msg)));
+}
+
+function writeJsonFile($filename,$jsonArray) {
+  return file_put_contents($filename,json_encode($jsonArray, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+function readJsonFile($filename) {
+  $json = json_decode(@file_get_contents($filename),true);
+  return is_array($json) ? $json : array();
+}
+
+###MAIN
+
+# Remove original patch plugin if found
+if ( is_file("/var/log/plugins/unraid.patch.plg") ) {
+  logger("Removing existing unraid.patch plugin.  Ignore any reboot messages");
+  @copy("/tmp/inline.sh","/tmp/original.inline.sh");
+  passthru("plugin remove unraid.patch.plg");
+
+  // handle situation if an error occurred during removal
+  @unlink("/tmp/plugins/pluginPending/unraid.patch.plg");
+  @unlink("/boot/config/plugins/unraid.patch.plg");
+  @unlink("/boot/config/plugins/AAA-UnraidPatch-BootLoader-DO_NOT_DELETE.plg");
+ 
+  @copy("/tmp/original.inline.sh","/tmp/inline.sh");  
+}
+
+@mkdir($paths['tmp']);
+
+if ( ! is_file($paths['txz']) ) {
+  logger("patches file not found.  Aborting\n");
+  exit(0);
+}
+
+logger("Extracting patches\n");
+passthru("tar -xf {$paths['txz']} -C {$paths['tmp']}",$error);
+if ($error) {
+  logger("Failed to extract patches\n");
+  logger("Aborting");
+  exit(0);
+}
+
+
+
+$unraidVersion = parse_ini_file($paths['version']);
+
+$installedUpdates = readJsonFile($paths['installedUpdates']);
+
+$firstBoot = ! is_file($paths['firstBoot']);
+
+$updates = readJsonFile("{$paths['tmp']}/patches.json");
+if ( ! is_array($updates['patches']) && ! is_array($updates['prescripts']) && ! is_array($updates['scripts']) ) {
+  logger("Could not read patches.json.  Aborting\n");
+  exit(0);
+}
+if ( version_compare($unraidVersion['version'],$updates['unraidVersion'],"!=") ) {
+  logger("Unraid version mismatch in patches.json.  Aborting Installation\n");
+  exit(0);
+}
+// install each update in order
+foreach($updates['prescripts'] ?? [] as $script) {
+  $filename = "{$paths['tmp']}/prescripts/".basename($script['url']);
+  if ( $installedUpdates[basename($script['url'])] ?? false ) {
+    logger("Skipping $filename... Already Installed\n");
+    continue;
+  }
+
+  if ( ! is_file($filename) ) {
+    logger("$filename does not exist\n");
+    logger("Aborting\n");
+    exit(0);
+  }
+  logger("Executing $filename...\n");
+  logger("\n");
+
+  chmod($filename,777);
+  passthru($filename,$exitCode);
+  if ( ! $exitCode ) {
+    $installedUpdates[basename($script['url'])] = true;
+  } else {
+    logger("\n\nFailed to execute script $filename   Aborting\n");
+    exit(0);
+  }
+}
+foreach($updates['patches'] as $script) {
+  $filename = "{$paths['tmp']}/patches/".basename($script['url']);
+  if ( $installedUpdates[basename($script['url'])] ?? false ) {
+    logger("Skipping $filename... Already Installed\n");
+    continue;
+  }
+  if ( ! is_file($filename) ) {
+    logger("$filename does not exist\n");
+    logger("Aborting\n");
+    exit(0);
+  }
+  logger("Installing $filename...\n");
+  logger("\n");
+
+  $baseDir = $script['dir'] ?? "/usr/local/";
+
+  ### fix the error in the dir on sample patch
+  $baseDir = "/usr/local/";
+ 
+  passthru("/usr/bin/patch -d $baseDir -p1 -i ".escapeshellarg($filename)." | logger",$exitCode);
+  if ( ! $exitCode ) {
+    $installedUpdates[basename($script['url'])] = true;
+  } else {
+    if ( ! $firstBoot )
+      touch($paths['rebootNotice']);
+    
+    logger("\n\nFailed to install patch ".basename($script['url'])."   Aborting\n");
+    logger("\n\n<b><font color='crimson'>A patch failed to install, it is likely that a system file was already modified by a different plugin. Please reboot the system so the patch will be applied before other plugins are installed.</font></b>\n",true);
+    exit(0);
+  }
+}
+foreach($updates['scripts'] ?? [] as $script) {
+  $filename = "{$paths['tmp']}/scripts/".basename($script['url']);
+  if ( $installedUpdates[basename($script['url'])] ?? false ) {
+    logger("Skipping $filename... Already Installed\n");
+    continue;
+  }
+
+  logger("Executing $filename...\n");
+  logger("\n");
+
+  chmod($filename,777);
+  passthru($filename,$exitCode);
+  if ( ! $exitCode ) {
+    $installedUpdates[basename($script['url'])] = true;
+  } else {
+    logger("\n");
+    logger("Failed to install script $filename   Aborting\n");
+    exit(0);
+  }
+}
+logger("Patches Installed\n");
+@unlink($paths['rebootNotice']);
+
+writeJsonFile($paths['installedUpdates'],$installedUpdates);
+?>
+]]>
+</INLINE>
+</FILE>
+
+<!-- Delete existing page file if it exists -->
+
+<FILE Run="/bin/bash">
+<INLINE>
+rm -rf /usr/local/emhttp/plugins/patcher/patcher.page
+exit 0
+</INLINE>
+</FILE>
+
+<!-- Create page file to display a reboot message if necessary in GUI -->
+<FILE Name="/usr/local/emhttp/plugins/patcher/patcher.page">
+<INLINE>
+<![CDATA[
+Menu='Buttons'
+Link='nav-user'
+---
+<?
+/* Copyright 2024-2025, Lime Technology
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+$unraidPatchRebootBanner = is_file("/tmp/unraid.patch/rebootNotice");
+?>
+
+<script>
+<? if ( $unraidPatchRebootBanner ) :?>
+  addBannerWarning("You must reboot your server to install the patches");
+<?endif;?>
+  
+</script>
+]]>
+</INLINE>
+</FILE>
+
+<!-- Install the patches -->
+
+<FILE Run="/bin/bash">
+<INLINE>
+/usr/bin/php /tmp/Patcher/install.php
+
+exit 0
+</INLINE>
+</FILE>
+</PLUGIN>
