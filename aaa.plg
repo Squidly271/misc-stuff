@@ -207,7 +207,7 @@ foreach($updates['patches'] as $script) {
   if ( ! $exitCode ) {
     $installedUpdates[basename($script['url'])] = true;
   } else {
-    if ( ! $firstBoot )
+    if ( $firstBoot )
       touch($paths['rebootNotice']);
     
     logger("\n\nFailed to install patch ".basename($script['url'])."   Aborting\n");
@@ -271,7 +271,7 @@ Link='nav-user'
  * all copies or substantial portions of the Software.
  */
 
-$unraidPatchRebootBanner = is_file("/tmp/unraid.patch/rebootNotice");
+$unraidPatchRebootBanner = is_file("/tmp/Patcher/rebootNotice");
 ?>
 
 <script>
