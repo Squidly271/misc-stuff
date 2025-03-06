@@ -202,7 +202,8 @@ foreach($updates['patches'] as $script) {
   ### fix the error in the dir on sample patch
   $baseDir = "/usr/local/";
  
-  passthru("/usr/bin/patch -d $baseDir -p1 -i ".escapeshellarg($filename)." | logger",$exitCode);
+  exec("/usr/bin/patch -d $baseDir -p1 -i ".escapeshellarg($filename)."",$output,$exitCode);
+  logger(implode("\n",$output)."\n");
   if ( ! $exitCode ) {
     $installedUpdates[basename($script['url'])] = true;
   } else {
