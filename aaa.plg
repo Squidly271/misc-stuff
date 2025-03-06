@@ -235,6 +235,27 @@ foreach($updates['scripts'] ?? [] as $script) {
     exit(0);
   }
 }
+
+foreach($updates['packages'] ?? [] as $script) {
+  $filename = "{$paths['tmp']}/packages/".basename($script['url']);
+  if ( $installedUpdates[basename($script['url'])] ?? false ) {
+    logger("Skipping $filename... Already Installed\n");
+    continue;
+  }
+
+  logger("Upgrading package $filename...\n");
+  logger("\n");
+
+  chmod($filename,777);
+  passthru("upgradepkg --reinstall $filename",$exitCode);
+  if ( ! $exitCode ) {
+    $installedUpdates[basename($script['url'])] = true;
+  } else {
+    logger("\n");
+    logger("Failed to upgrade package $filename   Aborting\n");
+    exit(0);
+  }
+}
 logger("Patches Installed\n");
 @unlink($paths['rebootNotice']);
 
